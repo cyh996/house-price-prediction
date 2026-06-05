@@ -16,11 +16,11 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME  }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build Docker image
-        run : docker build -t cyh996/house-price-api:latest
+        run: docker build -t cyh996/house-price-api:latest ./serving
 
       - name: Push Docker image
         run: docker push cyh996/house-price-api:latest
