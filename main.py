@@ -9,6 +9,7 @@ import numpy as np
 import optuna
 import os
 import joblib
+import mlflow
 
 os.makedirs("models", exist_ok=True)
 
@@ -56,6 +57,9 @@ features = ['OverallQual', 'GrLivArea', 'GarageCars', 'TotalBsmtSF', '1stFlrSF',
 
 result = []
 
+mlflow.set_tracking_uri("sqlite:///mlflow.db")
+mlflow.set_experiment('house-prices')
+
 def objective(trial):
     model = XGBRegressor(
         n_estimators = trial.suggest_int('n_estimators', 100, 500),
@@ -83,59 +87,66 @@ def objective(trial):
 
     return score
 
-X = df[features]
-y = np.log1p(df['SalePrice'])
+with mlflow.start_run():
+    X = df[features]
+    y = np.log1p(df['SalePrice'])
 
-cat_features = X.select_dtypes(include='object').columns.tolist()
-num_features = X.select_dtypes(exclude='object').columns.tolist()
+    cat_features = X.select_dtypes(include='object').columns.tolist()
+    num_features = X.select_dtypes(exclude='object').columns.tolist()
 
-preprocessor = ColumnTransformer([
-    ('cat', OneHotEncoder(handle_unknown='ignore'), cat_features),
-    ('num', StandardScaler(), num_features)
-])
+    preprocessor = ColumnTransformer([
+        ('cat', OneHotEncoder(handle_unknown='ignore'), cat_features),
+        ('num', StandardScaler(), num_features)
+    ])
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 42)
 
-sampler = optuna.samplers.TPESampler(seed=42)
+    sampler = optuna.samplers.TPESampler(seed=42)
 
-study = optuna.create_study(direction='maximize', sampler = sampler)
-study.optimize(objective, n_trials = 50)
+    study = optuna.create_study(direction='maximize', sampler = sampler)
+    study.optimize(objective, n_trials = 50)
 
-print(study.best_params)
-print(study.best_value)
+    print(study.best_params)
+    print(study.best_value)
 
-best_params = study.best_params
+    best_params = study.best_params
 
-best_model = XGBRegressor(
-    **best_params,
-    random_state = 42,
-    eval_metric = 'rmse',
-    verbosity=0
-)
+    best_model = XGBRegressor(
+        **best_params,
+        random_state = 42,
+        eval_metric = 'rmse',
+        verbosity=0
+    )
 
-best_pipe = Pipeline([
-    ('preprocessor', preprocessor),
-    ('model', best_model)
-])
+    best_pipe = Pipeline([
+        ('preprocessor', preprocessor),
+        ('model', best_model)
+    ])
 
-best_pipe.fit(X_train, y_train)
+    best_pipe.fit(X_train, y_train)
 
-joblib.dump(best_pipe, "models/xgb_house_price_model.pkl")
+    joblib.dump(best_pipe, "models/xgb_house_price_model.pkl")
 
-pred = best_pipe.predict(X_test)
+    pred = best_pipe.predict(X_test)
 
-pred_price = np.expm1(pred)
-y_test_price = np.expm1(y_test)
+    pred_price = np.expm1(pred)
+    y_test_price = np.expm1(y_test)
 
-pred_price = np.maximum(pred_price, 0)
+    pred_price = np.maximum(pred_price, 0)
 
-result.append({
-    'model': 'XGBRegressor',
-    'MAE': mean_absolute_error(y_test_price, pred_price),
-    'RMSE': root_mean_squared_error(y_test_price, pred_price),
-    'RMSLE': root_mean_squared_log_error(y_test_price, pred_price),
-    'R2_Score': r2_score(y_test_price, pred_price)
-})
+    result.append({
+        'model': 'XGBRegressor',
+        'MAE': mean_absolute_error(y_test_price, pred_price),
+        'RMSE': root_mean_squared_error(y_test_price, pred_price),
+        'RMSLE': root_mean_squared_log_error(y_test_price, pred_price),
+        'R2_Score': r2_score(y_test_price, pred_price)
+    })
+
+    mlflow.log_params(study.best_params)
+    mlflow.log_metric("r2", r2_score(y_test_price, pred_price))
+    mlflow.log_metric("rmse", root_mean_squared_error(y_test_price, pred_price))
+    mlflow.log_metric("mae", mean_absolute_error(y_test_price, pred_price))
+    mlflow.log_artifact("models/xgb_house_price_model.pkl")
 
 result_df = pd.DataFrame(result)
 print(result_df)
