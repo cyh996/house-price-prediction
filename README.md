@@ -4,6 +4,7 @@
 
 - Predict house prices using machine learning models on the Kaggle House Prices dataset.
 - Build a regression model to predict house prices and identify the most important factors affecting housing value.
+- This project also demonstrates an end-to-end MLOps workflow including experiment tracking, model serving, containerization, and CI/CD automation.
 
 ## Technologies Used
 
@@ -14,6 +15,10 @@
 - SHAP
 - seaborn
 - matplotlib
+- MLflow
+- FastAPI
+- Docker
+- GitHub Actions
 
 ## Dataset
 
@@ -112,14 +117,62 @@ OverallQual, GrLivArea, GarageCars, and YearBuilt showed the strongest influence
 
 The trained model can be saved locally using joblib. Model files are excluded from the repository.
 
+## MLOps Pipeline
+
+- MLflow for experiment tracking
+- FastAPI for model serving
+- Docker for containerization
+- GitHub Actions for CI/CD
+- Docker Hub for image registry
+
+Pipeline:
+
+Train Model
+→ MLflow Tracking
+→ FastAPI Serving
+→ Docker Containerization
+→ GitHub Actions CI/CD
+→ Docker Hub Registry
+
+### Docker Image
+
+Docker image is automatically built and pushed to Docker Hub through GitHub Actions.
+
+Docker Hub:
+https://hub.docker.com/r/cyh996/house-price-api
+
 ## Installation
+
+For model training:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Run
+For model serving:
+
+```bash
+pip install -r serving/requirements.txt
+```
+## Usage
+
+### Training
 
 ```bash
 python main.py
 ```
+
+### Model Serving
+
+```bash
+cd serving
+uvicorn app:app --reload
+```
+
+### Docker
+
+```bash
+docker build -t house-price-api ./serving
+docker run -p 8000:8000 house-price-api
+```
+
