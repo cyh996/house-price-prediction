@@ -1,10 +1,14 @@
+import os
 import joblib
 import pandas as pd
 import numpy as np
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-app = FastAPI()
+APP_NAME = os.getenv("APP_NAME", "House Price API")
+MODEL_VERSION = os.getenv("MODEL_VERSION", "v1")
+
+app = FastAPI(title=APP_NAME)
 
 model = joblib.load("models/xgb_house_price_model.pkl")
 
@@ -50,4 +54,11 @@ def predict(data: HouseInput):
 
     return {
         "predicted_price": round(float(predicted_price), 2)
+    }
+
+@app.get("/info")
+def info():
+    return {
+        "app_name": APP_NAME,
+        "model_version": MODEL_VERSION
     }

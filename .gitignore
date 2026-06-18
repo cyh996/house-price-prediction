@@ -12,9 +12,10 @@ venv/
 # VSCode
 .vscode/
 
-# Trained Models
-models/
-
 # OS
 .DS_Store
 Thumbs.db
+
+# mlflow
+mlflow.db
+mlruns/
