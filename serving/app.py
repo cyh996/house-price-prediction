@@ -62,3 +62,9 @@ def info():
         "app_name": APP_NAME,
         "model_version": MODEL_VERSION
     }
+
+@app.get("/health")
+def health():
+    return {
+        "status": "ok"
+    }

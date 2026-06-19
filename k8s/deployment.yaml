@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: house-price
+  namespace: house-price
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: house-price
+
+  template:
+    metadata:
+      labels:
+        app: house-price
+
+    spec:
+      containers:
+      - name: house-price-api
+        image: cyh996/house-price-api:latest
+        ports:
+        - containerPort: 8000
+
+        envFrom:
+        - configMapRef:
+            name: house-price-config
+
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          
