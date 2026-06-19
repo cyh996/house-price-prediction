@@ -4,7 +4,7 @@
 
 - Predict house prices using machine learning models on the Kaggle House Prices dataset.
 - Build a regression model to predict house prices and identify the most important factors affecting housing value.
-- This project also demonstrates an end-to-end MLOps workflow including experiment tracking, model serving, containerization, and CI/CD automation.
+- This project also demonstrates an end-to-end MLOps workflow including experiment tracking, model serving, containerization, CI automation, and Kubernetes deployment.
 
 ## Technologies Used
 
@@ -19,6 +19,7 @@
 - FastAPI
 - Docker
 - GitHub Actions
+- Kubernetes
 
 ## Dataset
 
@@ -122,8 +123,9 @@ The trained model can be saved locally using joblib. Model files are excluded fr
 - MLflow for experiment tracking
 - FastAPI for model serving
 - Docker for containerization
-- GitHub Actions for CI/CD
+- GitHub Actions for CI
 - Docker Hub for image registry
+- Kubernetes for deployment, scaling, and service management
 
 Pipeline:
 
@@ -131,8 +133,9 @@ Train Model
 → MLflow Tracking
 → FastAPI Serving
 → Docker Containerization
-→ GitHub Actions CI/CD
+→ GitHub Actions CI
 → Docker Hub Registry
+→ Kubernetes Deployment
 
 ### Docker Image
 
@@ -140,6 +143,34 @@ Docker image is automatically built and pushed to Docker Hub through GitHub Acti
 
 Docker Hub:
 https://hub.docker.com/r/cyh996/house-price-api
+
+## Kubernetes Deployment
+
+The application was deployed to Kubernetes using the following resources:
+
+- Namespace
+- Deployment
+- Service (ClusterIP)
+- ConfigMap
+- Horizontal Pod Autoscaler (HPA)
+- Ingress
+- Readiness Probe for traffic readiness checks
+- Liveness Probe for automatic container health monitoring
+
+Deployment workflow:
+
+Docker Hub Image
+→ Deployment
+→ Pod
+→ Service
+→ Ingress
+
+### Auto Scaling
+
+- CPU-based Horizontal Pod Autoscaler (HPA)
+- Min Replicas: 1
+- Max Replicas: 5
+- Target CPU Utilization: 70%
 
 ## Installation
 
@@ -176,3 +207,21 @@ docker build -t house-price-api ./serving
 docker run -p 8000:8000 house-price-api
 ```
 
+### Kubernetes
+
+```bash
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/
+```
+
+Check resources:
+
+```bash
+kubectl get all -n house-price
+```
+
+Delete resources:
+
+```bash
+kubectl delete namespace house-price
+```
